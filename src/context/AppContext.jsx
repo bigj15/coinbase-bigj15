@@ -1,7 +1,7 @@
 import { createContext, useMemo, useState } from "react";
 import { cryptoList } from "../data/crypto";
 
-const AppContext = createContext(null);
+export const AppContext = createContext(null);
 
 export function AppProvider({ children }) {
     const [query, setQuery] = useState("");
