@@ -1,25 +1,80 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { FiArrowDownLeft, FiArrowUpRight } from "react-icons/fi";
-import { COINS } from "../../data/exploreData";
+import { FiArrowDownLeft, FiArrowUpRight, FiPlus } from "react-icons/fi";
+import { getAllCrypto, addCrypto } from "../../api/api";
+import useApp from "../../context/useApp";
 
 export default function CryptoTableSection({ search }) {
     const navigate = useNavigate();
+    const { isLoggedIn } = useApp();
     const [starred, setStarred] = useState(new Set());
+    const [coins, setCoins] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [showAddModal, setShowAddModal] = useState(false);
+    const [addForm, setAddForm] = useState({ name: "", symbol: "", price: "", image: "", change24h: "" });
+    const [addError, setAddError] = useState("");
+    const [addSuccess, setAddSuccess] = useState("");
+    const [addLoading, setAddLoading] = useState(false);
+
+    const fetchCoins = async () => {
+        try {
+            setLoading(true);
+            const data = await getAllCrypto();
+            setCoins(data);
+        } catch (err) {
+            console.error("Failed to fetch coins:", err);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchCoins();
+    }, []);
 
     const toggleStar = (symbol) => {
         setStarred((prev) => {
-        const next = new Set(prev);
-        next.has(symbol) ? next.delete(symbol) : next.add(symbol);
-        return next;
+            const next = new Set(prev);
+            next.has(symbol) ? next.delete(symbol) : next.add(symbol);
+            return next;
         });
     };
 
-    const filtered = COINS.filter(
+    const filtered = coins.filter(
         (c) =>
         c.name.toLowerCase().includes(search.toLowerCase()) ||
         c.symbol.toLowerCase().includes(search.toLowerCase())
     );
+
+    const handleAddCrypto = async () => {
+        const { name, symbol, price, image, change24h } = addForm;
+        if (!name || !symbol || !price || !image || change24h === "") {
+            setAddError("Please fill in all fields");
+            return;
+        }
+        setAddError("");
+        setAddLoading(true);
+        try {
+            await addCrypto({
+                name,
+                symbol,
+                price: parseFloat(price),
+                image,
+                change24h: parseFloat(change24h),
+            });
+            setAddSuccess("Cryptocurrency added successfully!");
+            setAddForm({ name: "", symbol: "", price: "", image: "", change24h: "" });
+            await fetchCoins();
+            setTimeout(() => {
+                setShowAddModal(false);
+                setAddSuccess("");
+            }, 1500);
+        } catch (err) {
+            setAddError(err.message);
+        } finally {
+            setAddLoading(false);
+        }
+    };
 
     return (
         <div className="mt-10">
@@ -27,7 +82,7 @@ export default function CryptoTableSection({ search }) {
                 <div>
                 <h2 className="text-xl font-bold text-gray-900">
                     Crypto market prices{" "}
-                    <span className="text-sm font-normal text-gray-400">18,563 assets</span>
+                    <span className="text-sm font-normal text-gray-400">{coins.length} assets</span>
                 </h2>
                 <p className="mt-1 text-xs text-gray-500">
                     The overall crypto market is growing this week. As of today, the total crypto market capitalization is 24.04 trillion,
@@ -35,11 +90,18 @@ export default function CryptoTableSection({ search }) {
                     <button className="text-[#0052FF] hover:underline font-medium">Read more</button>
                 </p>
                 </div>
+                <button
+                    onClick={() => setShowAddModal(true)}
+                    className="flex items-center gap-2 rounded-full bg-[#0052FF] px-4 py-2 text-sm font-semibold text-white hover:bg-[#0046d6] transition-colors"
+                >
+                    <FiPlus size={16} />
+                    Add Crypto
+                </button>
             </div>
 
             {/* Filters */}
             <div className="flex flex-wrap gap-2 mb-4">
-                {["All assets", "1D", "GHS", "10 rows"].map((f, i) => (
+                {["All assets", "1D", "USD", `${filtered.length} rows`].map((f, i) => (
                 <button key={f} className="flex items-center gap-1.5 rounded-full border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50">
                     {i === 0 && <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/></svg>}
                     {f}
@@ -49,119 +111,118 @@ export default function CryptoTableSection({ search }) {
             </div>
 
             {/* Table */}
+            {loading ? (
+                <div className="flex justify-center py-20">
+                    <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#0052FF]"></div>
+                </div>
+            ) : (
             <div className="overflow-x-auto rounded-2xl border border-gray-100">
                 <table className="w-full text-sm">
                 <thead>
                     <tr className="border-b border-gray-100 text-xs text-gray-400">
                     <th className="w-8 px-3 py-3" />
-                    <th className="px-3 py-3 text-left font-medium">
-                        Asset
-                        <button className="ml-1 text-gray-300 hover:text-gray-500">⇅</button>
-                    </th>
-                    <th className="px-3 py-3 text-right font-medium">
-                        Market price
-                        <button className="ml-1 text-gray-300 hover:text-gray-500">⇅</button>
-                    </th>
-                    <th className="px-3 py-3 text-center font-medium">Chart</th>
-                    <th className="px-3 py-3 text-right font-medium">
-                        Change
-                        <button className="ml-1 text-gray-300 hover:text-gray-500">⇅</button>
-                    </th>
-                    <th className="px-3 py-3 text-right font-medium text-[#0052FF]">
-                        Mkt cap
-                        <button className="ml-1 text-blue-300 hover:text-blue-500">⇅</button>
-                    </th>
-                    <th className="px-3 py-3 text-right font-medium">
-                        Volume
-                        <button className="ml-1 text-gray-300 hover:text-gray-500">⇅</button>
-                    </th>
+                    <th className="px-3 py-3 text-left font-medium">Asset</th>
+                    <th className="px-3 py-3 text-right font-medium">Market price</th>
+                    <th className="px-3 py-3 text-right font-medium">Change (24h)</th>
                     <th className="px-3 py-3 text-right font-medium">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
                     {filtered.map((coin) => (
-                    <tr key={coin.symbol} className="border-b border-gray-50 hover:bg-gray-50 transition-colors">
-                        {/* Star */}
+                    <tr key={coin._id || coin.symbol} className="border-b border-gray-50 hover:bg-gray-50 transition-colors">
                         <td className="px-3 py-4 text-center">
                         <button onClick={() => toggleStar(coin.symbol)} className="text-gray-300 hover:text-yellow-400 transition-colors">
-                            {starred.has(coin.symbol) ? "★" : "☆"}
+                            {starred.has(coin.symbol) ? "\u2605" : "\u2606"}
                         </button>
                         </td>
 
-                        {/* Asset */}
                         <td className="px-3 py-4">
                         <div className="flex items-center gap-3">
                             <img src={coin.image} alt={coin.name} className="h-9 w-9 rounded-full" />
                             <div>
                             <p className="font-semibold text-gray-900">{coin.name}</p>
-                            <p className="text-xs text-gray-400">
-                                {coin.symbol}
-                                {coin.note && <span className="ml-1 text-emerald-600">• {coin.note}</span>}
-                            </p>
+                            <p className="text-xs text-gray-400">{coin.symbol}</p>
                             </div>
                         </div>
                         </td>
 
-                        {/* Price */}
                         <td className="px-3 py-4 text-right font-semibold text-gray-900">
-                        {coin.price}
+                        ${coin.price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                         </td>
 
-                        {/* Sparkline */}
-                        <td className="px-3 py-4 text-center">
-                        <svg viewBox="0 0 90 30" className="h-8 w-20 mx-auto">
-                            <path d={coin.spark} fill={coin.neg ? "#fee2e250" : "#dcfce750"} />
-                            <path d={coin.spark.split(" L")[0]} fill="none" stroke={coin.neg ? "#ef4444" : "#22c55e"} strokeWidth="1.8" />
-                        </svg>
-                        </td>
-
-                        {/* Change */}
-                        <td className={`px-3 py-4 text-right font-medium ${coin.neg ? "text-red-500" : "text-emerald-500"}`}>
+                        <td className={`px-3 py-4 text-right font-medium ${coin.change24h < 0 ? "text-red-500" : "text-emerald-500"}`}>
                             <div className="flex items-center justify-end gap-1">
-                                {coin.neg ? <FiArrowDownLeft size={14} /> : <FiArrowUpRight size={14} />}
-                                <span>{coin.change.replace(/^[+-]/, "")}</span>
+                                {coin.change24h < 0 ? <FiArrowDownLeft size={14} /> : <FiArrowUpRight size={14} />}
+                                <span>{Math.abs(coin.change24h).toFixed(2)}%</span>
                             </div>
                         </td>
 
-                        {/* Mkt cap */}
-                        <td className="px-3 py-4 text-right text-gray-700">{coin.mktCap}</td>
-
-                        {/* Volume */}
-                        <td className="px-3 py-4 text-right text-gray-700">{coin.volume}</td>
-
-                        {/* Trade button */}
                         <td className="px-3 py-4 text-right">
-                        {coin.symbol !== "TRX" && (
-                            <button
-                            onClick={() => navigate("/signup")}
+                        <button
+                            onClick={() => navigate(isLoggedIn ? "/" : "/signup")}
                             className="rounded-full bg-[#0052FF] px-4 py-1.5 text-xs font-semibold text-white hover:bg-[#0046d6] transition-colors"
-                            >
+                        >
                             Trade
-                            </button>
-                        )}
+                        </button>
                         </td>
                     </tr>
                     ))}
                 </tbody>
                 </table>
             </div>
+            )}
 
-            {/* Pagination */}
-            <div className="mt-4 flex items-center justify-center gap-2">
-                {[1, 2, 3, "...", "1,857"].map((p, i) => (
-                <button
-                    key={i}
-                    className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-medium transition-colors
-                    ${p === 1 ? "bg-[#0052FF] text-white" : "text-gray-600 hover:bg-gray-100"}`}
-                >
-                    {p}
-                </button>
-                ))}
-                <button className="flex h-8 w-8 items-center justify-center rounded-full text-gray-400 hover:bg-gray-100">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 18l6-6-6-6"/></svg>
-                </button>
-            </div>
-            <p className="mt-2 text-center text-xs text-gray-400">1–10 of 18,563 assets</p>
+            <p className="mt-4 text-center text-xs text-gray-400">{filtered.length} assets displayed</p>
+
+            {/* Add Crypto Modal */}
+            {showAddModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+                    <div className="bg-white rounded-2xl p-8 mx-4 max-w-md w-full shadow-2xl">
+                        <div className="flex items-center justify-between mb-6">
+                            <h2 className="text-xl font-bold text-gray-900">Add New Cryptocurrency</h2>
+                            <button onClick={() => { setShowAddModal(false); setAddError(""); setAddSuccess(""); }} className="text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
+                        </div>
+
+                        {addError && (
+                            <div className="mb-4 bg-red-50 border border-red-200 rounded-lg px-4 py-3 text-red-600 text-sm">{addError}</div>
+                        )}
+                        {addSuccess && (
+                            <div className="mb-4 bg-green-50 border border-green-200 rounded-lg px-4 py-3 text-green-600 text-sm">{addSuccess}</div>
+                        )}
+
+                        <div className="space-y-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+                                <input type="text" value={addForm.name} onChange={(e) => setAddForm({ ...addForm, name: e.target.value })} placeholder="e.g. Bitcoin" className="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm outline-none focus:border-[#0052FF] transition-colors" />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Symbol</label>
+                                <input type="text" value={addForm.symbol} onChange={(e) => setAddForm({ ...addForm, symbol: e.target.value })} placeholder="e.g. BTC" className="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm outline-none focus:border-[#0052FF] transition-colors" />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Price (USD)</label>
+                                <input type="number" step="0.01" value={addForm.price} onChange={(e) => setAddForm({ ...addForm, price: e.target.value })} placeholder="e.g. 68250.12" className="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm outline-none focus:border-[#0052FF] transition-colors" />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Image URL</label>
+                                <input type="url" value={addForm.image} onChange={(e) => setAddForm({ ...addForm, image: e.target.value })} placeholder="https://example.com/coin.png" className="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm outline-none focus:border-[#0052FF] transition-colors" />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">24h Change (%)</label>
+                                <input type="number" step="0.01" value={addForm.change24h} onChange={(e) => setAddForm({ ...addForm, change24h: e.target.value })} placeholder="e.g. 2.5 or -1.3" className="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm outline-none focus:border-[#0052FF] transition-colors" />
+                            </div>
+                        </div>
+
+                        <button
+                            onClick={handleAddCrypto}
+                            disabled={addLoading}
+                            className="mt-6 w-full bg-[#0052FF] hover:bg-[#0046d6] text-white font-semibold py-3 rounded-full text-sm transition-colors disabled:opacity-50"
+                        >
+                            {addLoading ? "Adding..." : "Add Cryptocurrency"}
+                        </button>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

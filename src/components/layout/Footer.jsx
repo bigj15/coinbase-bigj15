@@ -110,6 +110,13 @@ export default function Footer() {
                     </div>
                 </div>
 
+                {/* Disclaimer */}
+                <div className="mt-8 mb-4 rounded-xl bg-orange-100 p-4 border border-orange-200">
+                    <p className="text-sm font-semibold text-orange-800 text-center">
+                        Disclaimer: This is a demo project created for educational purposes. It is not affiliated with Coinbase or any real cryptocurrency exchange. Please do not enter real personal information.
+                    </p>
+                </div>
+
                 {/* Social Icons */}
                 <div className="mt-12 flex items-center gap-6 pb-6 mt-4">
                     <a href="#" className="hover:opacity-70 transition-opacity">

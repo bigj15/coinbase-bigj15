@@ -1,16 +1,7 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import CoinRow from "../common/CoinRow";
-import bitcoin from "../../assets/bitcoin.png";
-import ethereum from "../../assets/ethereum.png";
-import tether from "../../assets/tether.png";
-import usdc from "../../assets/usdc.png";
-import bnb from "../../assets/bnb.png";
-import xrp from "../../assets/xrp.png";
-import solana from "../../assets/sol.png";
-import cardano from "../../assets/cardano.png";
-import dogecoin from "../../assets/dogecoin.png";
-import tron from "../../assets/tron.png";
+import { getAllCrypto, getTopGainers, getNewListings } from "../../api/api";
 
 const TAB_KEYS = {
     tradable: "tradable",
@@ -20,38 +11,47 @@ const TAB_KEYS = {
 
 export default function ExploreCryptoSection() {
     const [activeTab, setActiveTab] = useState(TAB_KEYS.tradable);
+    const [tradable, setTradable] = useState([]);
+    const [gainers, setGainers] = useState([]);
+    const [newListings, setNewListings] = useState([]);
+    const [loading, setLoading] = useState(true);
 
-    const tabData = useMemo(
-        () => ({
-            [TAB_KEYS.tradable]: [
-                { name: "Bitcoin", symbol: "BTC", price: "GHS 737,160.57", change: "↗ 2.25%", image: bitcoin },
-                { name: "Ethereum", symbol: "ETH", price: "GHS 21,559.11", change: "↗ 4.03%", image: ethereum },
-                { name: "Tether", symbol: "USDT", price: "GHS 10.75", change: "↗ 0.00%", image: tether },
-                { name: "BNB", symbol: "BNB", price: "GHS 6,855.50", change: "↗ 3.06%", image: bnb },
-                { name: "XRP", symbol: "XRP", price: "GHS 14.06", change: "↗ 1.56%", image: xrp },
-                { name: "USDC", symbol: "USDC", price: "GHS 10.79", change: "↗ 0.00%", image: usdc },
-            ],
-            [TAB_KEYS.topGainers]: [
-                { name: "Flow", symbol: "FLOW", price: "GHS 0.52", change: "↗ 19.75%", image: ethereum },
-                { name: "KernelDAO", symbol: "KERNEL", price: "GHS 1.01", change: "↗ 13.79%", image: xrp },
-                { name: "Fabric Protocol", symbol: "FAB", price: "GHS 0.48", change: "↗ 11.99%", image: usdc },
-                { name: "Hyperliquid", symbol: "HYPE", price: "GHS 368.94", change: "↗ 11.29%", image: solana },
-                { name: "Spark", symbol: "SPK", price: "GHS 0.24", change: "↗ 11.64%", image: dogecoin },
-                { name: "Definitive", symbol: "EDGE", price: "GHS 1.60", change: "↗ 9.10%", image: bnb },
-            ],
-            [TAB_KEYS.newOnCoinbase]: [
-                { name: "Hyperliquid", symbol: "HYPE", price: "GHS 369.59", change: "↗ 11.34%", image: solana },
-                { name: "Jupiter", symbol: "JUP", price: "GHS 1.73", change: "↙ 3.71%", image: ethereum, negative: true },
-                { name: "Lighter", symbol: "LT", price: "GHS 10.87", change: "↙ 7.89%", image: cardano, negative: true },
-                { name: "Walrus", symbol: "WAL", price: "GHS 0.82", change: "↗ 4.56%", image: tether },
-                { name: "Sentient", symbol: "SNT", price: "GHS 0.25", change: "↙ 0.92%", image: dogecoin, negative: true },
-                { name: "Raydium", symbol: "RAY", price: "GHS 6.46", change: "↗ 3.94%", image: tron },
-            ],
-        }),
-        []
-    );
+    useEffect(() => {
+        async function fetchData() {
+            try {
+                const [allData, gainersData, newData] = await Promise.all([
+                    getAllCrypto(),
+                    getTopGainers(),
+                    getNewListings(),
+                ]);
+                setTradable(allData.slice(0, 6));
+                setGainers(gainersData.slice(0, 6));
+                setNewListings(newData.slice(0, 6));
+            } catch (err) {
+                console.error("Failed to fetch crypto data:", err);
+            } finally {
+                setLoading(false);
+            }
+        }
+        fetchData();
+    }, []);
 
-    const coins = tabData[activeTab];
+    const formatCoin = (crypto) => ({
+        name: crypto.name,
+        symbol: crypto.symbol,
+        price: `$${crypto.price.toLocaleString()}`,
+        change: `${crypto.change24h >= 0 ? "\u2197" : "\u2199"} ${Math.abs(crypto.change24h).toFixed(2)}%`,
+        image: crypto.image,
+        negative: crypto.change24h < 0,
+    });
+
+    const coins = useMemo(() => {
+        let data = [];
+        if (activeTab === TAB_KEYS.tradable) data = tradable;
+        else if (activeTab === TAB_KEYS.topGainers) data = gainers;
+        else data = newListings;
+        return data.map(formatCoin);
+    }, [activeTab, tradable, gainers, newListings]);
 
     return (
         <section className="bg-[#EEF1F4] py-20">
@@ -105,17 +105,23 @@ export default function ExploreCryptoSection() {
 
                             {/* list */}
                             <div className="space-y-4">
-                                {coins.map((coin) => (
-                                    <CoinRow
-                                        key={coin.name}
-                                        name={coin.name}
-                                        symbol={coin.symbol}
-                                        price={coin.price}
-                                        change={coin.change}
-                                        image={coin.image}
-                                        negative={coin.negative}
-                                    />
-                                ))}
+                                {loading ? (
+                                    <div className="flex justify-center py-10">
+                                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
+                                    </div>
+                                ) : (
+                                    coins.map((coin) => (
+                                        <CoinRow
+                                            key={coin.name}
+                                            name={coin.name}
+                                            symbol={coin.symbol}
+                                            price={coin.price}
+                                            change={coin.change}
+                                            image={coin.image}
+                                            negative={coin.negative}
+                                        />
+                                    ))
+                                )}
                             </div>
                         </div>
                     </div>

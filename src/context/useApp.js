@@ -1,8 +1,8 @@
 import { useContext } from "react";
 import { AppContext } from "./AppContext";
 
-export function useApp() {
+export default function useApp() {
     const ctx = useContext(AppContext);
-    if (!ctx) throw new Error("useApp must be used within AppProvider");
+    if (!ctx) throw new Error("useApp must be inside AppProvider");
     return ctx;
 }

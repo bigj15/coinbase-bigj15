@@ -1,15 +1,25 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import useApp from "../context/useApp";
+import { loginUser } from "../api/api";
 
 import CoinbaseLogo from "../assets/coinbase_black.svg";
 
 export default function SignIn() {
     const navigate = useNavigate();
-    const [phase, setPhase] = useState("splash"); // splash -> signin
+    const { login, isLoggedIn } = useApp();
+    const [phase, setPhase] = useState("splash");
     const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
     const [logoReady, setLogoReady] = useState(false);
     const [showModal, setShowModal] = useState(false);
     const [showCookieBanner, setShowCookieBanner] = useState(true);
+    const [error, setError] = useState("");
+    const [loading, setLoading] = useState(false);
+
+    useEffect(() => {
+        if (isLoggedIn) navigate("/");
+    }, [isLoggedIn, navigate]);
 
     useEffect(() => {
         const t1 = setTimeout(() => setLogoReady(true), 100);
@@ -17,30 +27,32 @@ export default function SignIn() {
         return () => { clearTimeout(t1); clearTimeout(t2); };
     }, []);
 
-    const handleContinue = () => {
-        if (!email.trim()) return;
-        // handle continue
+    const handleContinue = async () => {
+        if (!email.trim() || !password.trim()) {
+            setError("Please enter both email and password");
+            return;
+        }
+        setError("");
+        setLoading(true);
+        try {
+            const data = await loginUser(email, password);
+            login(data);
+            navigate("/");
+        } catch (err) {
+            setError(err.message);
+        } finally {
+            setLoading(false);
+        }
     };
 
-    // "Cancel signing in" clicked → show modal
     const handleCancelSigningIn = () => setShowModal(true);
-
-    // Modal: No → stay on /signin
-    const handleModalNo = () => {
-        setShowModal(false);
-        navigate("/signin");
-    };
-
-    // Modal: Yes → go home
-    const handleModalYes = () => {
-        setShowModal(false);
-        navigate("/");
-    };
+    const handleModalNo = () => { setShowModal(false); navigate("/signin"); };
+    const handleModalYes = () => { setShowModal(false); navigate("/"); };
 
     return (
         <div className="relative min-h-screen bg-black overflow-hidden flex flex-col">
 
-        {/* ── SPLASH PHASE ── */}
+        {/* SPLASH PHASE */}
         <div
             className="absolute inset-0 flex items-center justify-center transition-opacity duration-700"
             style={{
@@ -60,7 +72,7 @@ export default function SignIn() {
             </div>
         </div>
 
-        {/* ── SIGN-IN PHASE ── */}
+        {/* SIGN-IN PHASE */}
         <div
             className="flex flex-col min-h-screen transition-opacity duration-700"
             style={{
@@ -68,7 +80,6 @@ export default function SignIn() {
             pointerEvents: phase === "signin" ? "auto" : "none",
             }}
         >
-            {/* Top bar with logo animating to top-left */}
             <div className="flex items-center px-5 pt-4 pb-2">
             <div
                 className="transition-all duration-700 ease-out"
@@ -83,7 +94,6 @@ export default function SignIn() {
             </div>
             </div>
 
-            {/* Main form */}
             <div className="flex-1 flex items-center justify-center px-4">
             <div
                 className="w-full max-w-[320px] transition-all duration-700 ease-out"
@@ -97,6 +107,12 @@ export default function SignIn() {
                 Sign in to Coinbase
                 </h1>
 
+                {error && (
+                    <div className="mb-4 bg-red-500/20 border border-red-500/50 rounded-lg px-4 py-3 text-red-300 text-sm">
+                        {error}
+                    </div>
+                )}
+
                 {/* Email field */}
                 <label className="block text-white text-sm font-medium mb-2">Email</label>
                 <input
@@ -107,12 +123,27 @@ export default function SignIn() {
                 className="w-full bg-transparent border border-blue-500 rounded-md px-3 py-2 text-white placeholder-gray-500 text-sm outline-none focus:border-blue-700 transition-colors mb-4"
                 />
 
+                {/* Password field */}
+                <div className="flex justify-between items-center mb-2">
+                    <label className="block text-white text-sm font-medium">Password</label>
+                    <span className="text-orange-400 text-xs font-semibold">Demo app – do not use your real password</span>
+                </div>
+                <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Your password"
+                className="w-full bg-transparent border border-blue-500 rounded-md px-3 py-2 text-white placeholder-gray-500 text-sm outline-none focus:border-blue-700 transition-colors mb-4"
+                onKeyDown={(e) => e.key === "Enter" && handleContinue()}
+                />
+
                 {/* Continue button */}
                 <button
                 onClick={handleContinue}
-                className="w-full bg-blue-500 hover:bg-blue-700 active:bg-blue-800 text-white font-semibold py-2.5 rounded-full text-sm transition-colors mb-5"
+                disabled={loading}
+                className="w-full bg-blue-500 hover:bg-blue-700 active:bg-blue-800 text-white font-semibold py-2.5 rounded-full text-sm transition-colors mb-5 disabled:opacity-50"
                 >
-                Continue
+                {loading ? "Signing in..." : "Continue"}
                 </button>
 
                 {/* Divider */}
@@ -124,7 +155,6 @@ export default function SignIn() {
 
                 {/* OAuth buttons */}
                 <div className="flex flex-col gap-3 mb-7">
-                {/* Passkey */}
                 <button className="w-full flex items-center justify-center gap-3 bg-gray-800 hover:bg-gray-700 active:bg-gray-600 text-white font-semibold py-3 rounded-full text-sm transition-colors">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" className="text-white">
                     <circle cx="12" cy="8" r="4" stroke="currentColor" strokeWidth="2"/>
@@ -135,7 +165,6 @@ export default function SignIn() {
                     Sign in with Passkey
                 </button>
 
-                {/* Google */}
                 <button className="w-full flex items-center justify-center gap-3 bg-gray-800 hover:bg-gray-700 active:bg-gray-600 text-white font-semibold py-3 rounded-full text-sm transition-colors">
                     <svg width="18" height="18" viewBox="0 0 24 24">
                     <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
@@ -146,7 +175,6 @@ export default function SignIn() {
                     Sign in with Google
                 </button>
 
-                {/* Apple */}
                 <button className="w-full flex items-center justify-center gap-3 bg-gray-800 hover:bg-gray-700 active:bg-gray-600 text-white font-semibold py-3 rounded-full text-sm transition-colors">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="white">
                     <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/>
@@ -166,14 +194,12 @@ export default function SignIn() {
                 </button>
                 </p>
 
-                {/* Privacy note */}
                 <p className="text-center text-sm text-gray-500 leading-relaxed mb-6">
                 Not your device? Use a private window. See our{" "}
                 <a href="#" className="underline hover:text-gray-300 transition-colors">Privacy Policy</a>{" "}
                 for more info.
                 </p>
 
-                {/* Cancel signing in */}
                 <p className="text-center">
                 <button
                     onClick={handleCancelSigningIn}
@@ -185,7 +211,6 @@ export default function SignIn() {
             </div>
             </div>
 
-            {/* Cookie banner — dismissible */}
             {showCookieBanner && (
             <div
                 className="bg-gray-900 border-t border-gray-800 px-5 py-3 flex items-center justify-between gap-4 transition-all duration-700 ease-out"
@@ -210,11 +235,10 @@ export default function SignIn() {
             )}
         </div>
 
-        {/* ── MODAL OVERLAY ── */}
+        {/* MODAL OVERLAY */}
         {showModal && (
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
             <div className="bg-gray-900 rounded-2xl p-8 mx-5 max-w-xs w-full text-center shadow-2xl">
-                {/* Warning triangle */}
                 <div className="flex justify-center mb-5">
                 <svg width="72" height="64" viewBox="0 0 72 64" fill="none">
                     <path d="M36 4L68 60H4L36 4Z" fill="#F97316" />
@@ -226,14 +250,12 @@ export default function SignIn() {
                 <p className="text-gray-400 text-sm mb-7">Are you sure you want to go back?</p>
 
                 <div className="flex gap-3">
-                {/* No → stay on /signin */}
                 <button
                     onClick={handleModalNo}
                     className="flex-1 bg-gray-800 hover:bg-gray-700 text-white font-semibold py-3 rounded-full text-sm transition-colors"
                 >
                     No
                 </button>
-                {/* Yes → go to "/" */}
                 <button
                     onClick={handleModalYes}
                     className="flex-1 bg-blue-500 hover:bg-blue-600 text-white font-semibold py-3 rounded-full text-sm transition-colors"

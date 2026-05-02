@@ -37,7 +37,8 @@ import {
     } from "react-icons/tb";
     import { FiBriefcase, FiCreditCard, FiBookOpen, FiShield } from "react-icons/fi";
 
-    import logo from "../../assets/coinbase_logo.png";
+    import useApp from "../../context/useApp";
+import logo from "../../assets/coinbase_logo.png";
     import individualsPromo from "../../assets/individuals-promo.png";
     import businessesPromo from "../../assets/business-promo.png";
     import institutionsPromo from "../../assets/institutions-promo.png";
@@ -739,6 +740,90 @@ function DesktopNavItem({ label, menuKey, activeMenu, setActiveMenu, closePanels
     );
 }
 
+function NavbarAuthButtons() {
+    const { isLoggedIn, user, logout } = useApp();
+    const navigate = (window.location.href.includes) ? null : null;
+
+    if (isLoggedIn) {
+        return (
+            <>
+                <Link
+                to="/profile"
+                className="flex items-center gap-2 rounded-full bg-gray-100 px-4 py-3 text-sm font-semibold text-gray-900 hover:bg-gray-200"
+                >
+                <span className="h-6 w-6 rounded-full bg-[#0052FF] flex items-center justify-center text-white text-xs font-bold">
+                    {user?.name?.charAt(0)?.toUpperCase() || "U"}
+                </span>
+                Profile
+                </Link>
+                <button
+                onClick={() => { logout(); window.location.href = "/"; }}
+                className="rounded-full bg-gray-100 px-6 py-3 text-sm font-semibold text-gray-900 hover:bg-gray-200"
+                >
+                Sign out
+                </button>
+            </>
+        );
+    }
+
+    return (
+        <>
+            <Link
+            to="/signin"
+            className="rounded-full bg-gray-100 px-6 py-3 text-sm font-semibold text-gray-900 hover:bg-gray-200"
+            >
+            Sign in
+            </Link>
+            <Link
+            to="/signup"
+            className="rounded-full bg-[#0052FF] px-6 py-3 text-sm font-semibold text-white hover:bg-[#0046db]"
+            >
+            Sign up
+            </Link>
+        </>
+    );
+}
+
+function MobileNavbarAuthButtons() {
+    const { isLoggedIn, logout } = useApp();
+
+    if (isLoggedIn) {
+        return (
+            <>
+                <Link
+                to="/profile"
+                className="w-full text-center rounded-full bg-[#0052FF] px-6 py-3 text-sm font-semibold text-white hover:bg-[#0046db] mb-3"
+                >
+                My Profile
+                </Link>
+                <button
+                onClick={() => { logout(); window.location.href = "/"; }}
+                className="w-full text-center rounded-full bg-gray-100 px-6 py-3 text-sm font-semibold text-gray-900 hover:bg-gray-200 mb-4"
+                >
+                Sign out
+                </button>
+            </>
+        );
+    }
+
+    return (
+        <>
+            <Link
+            to="/signup"
+            className="w-full text-center rounded-full bg-[#0052FF] px-6 py-3 text-sm font-semibold text-white hover:bg-[#0046db] mb-3"
+            >
+            Get started
+            </Link>
+            <Link
+            to="/signin"
+            className="w-full text-center rounded-full bg-gray-100 px-6 py-3 text-sm font-semibold text-gray-900 hover:bg-gray-200 mb-4"
+            >
+            Sign in
+            </Link>
+        </>
+    );
+}
+
 export default function Navbar() {
     const [activeMenu, setActiveMenu] = useState(null);
     const [showSearchPanel, setShowSearchPanel] = useState(false);
@@ -907,19 +992,7 @@ export default function Navbar() {
                 )}
                 </div>
 
-                <Link
-                to="/signin"
-                className="rounded-full bg-gray-100 px-6 py-3 text-sm font-semibold text-gray-900 hover:bg-gray-200"
-                >
-                Sign in
-                </Link>
-
-                <Link
-                to="/signup"
-                className="rounded-full bg-[#0052FF] px-6 py-3 text-sm font-semibold text-white hover:bg-[#0046db]"
-                >
-                Sign up
-                </Link>
+                <NavbarAuthButtons />
             </div>
             
             {/* Mobile Menu Button  (only visible below lg) */}

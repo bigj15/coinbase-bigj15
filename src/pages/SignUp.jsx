@@ -1,20 +1,48 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import useApp from "../context/useApp";
+import { registerUser } from "../api/api";
 import CoinbaseLogo from "../assets/coinbase_logo_white.png";
 
 export default function SignUp() {
     const navigate = useNavigate();
+    const { login, isLoggedIn } = useApp();
+    const [name, setName] = useState("");
     const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
     const [visible, setVisible] = useState(false);
+    const [error, setError] = useState("");
+    const [loading, setLoading] = useState(false);
+
+    useEffect(() => {
+        if (isLoggedIn) navigate("/");
+    }, [isLoggedIn, navigate]);
 
     useEffect(() => {
         const t = setTimeout(() => setVisible(true), 80);
         return () => clearTimeout(t);
     }, []);
 
-    const handleContinue = () => {
-        if (!email.trim()) return;
-        // handle signup continue — wire to next step as needed
+    const handleContinue = async () => {
+        if (!name.trim() || !email.trim() || !password.trim()) {
+            setError("Please fill in all fields");
+            return;
+        }
+        if (password.length < 6) {
+            setError("Password must be at least 6 characters");
+            return;
+        }
+        setError("");
+        setLoading(true);
+        try {
+            const data = await registerUser(name, email, password);
+            login(data);
+            navigate("/");
+        } catch (err) {
+            setError(err.message);
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
@@ -42,6 +70,22 @@ export default function SignUp() {
                 Access all that Coinbase has to offer with a single account.
             </p>
 
+            {error && (
+                <div className="mb-4 bg-red-500/20 border border-red-500/50 rounded-lg px-4 py-3 text-red-300 text-sm">
+                    {error}
+                </div>
+            )}
+
+            {/* Name */}
+            <label className="block text-white text-sm font-medium mb-2">Full Name</label>
+            <input
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Your full name"
+                className="w-full bg-transparent border border-blue-500 rounded-md px-4 py-3 text-white placeholder-gray-500 text-sm outline-none focus:border-blue-500 transition-colors mb-4"
+            />
+
             {/* Email */}
             <label className="block text-white text-sm font-medium mb-2">Email</label>
             <input
@@ -52,12 +96,27 @@ export default function SignUp() {
                 className="w-full bg-transparent border border-blue-500 rounded-md px-4 py-3 text-white placeholder-gray-500 text-sm outline-none focus:border-blue-500 transition-colors mb-4"
             />
 
+            {/* Password */}
+            <div className="flex justify-between items-center mb-2">
+                <label className="block text-white text-sm font-medium">Password</label>
+                <span className="text-orange-400 text-xs font-semibold">Demo app – do not use your real password</span>
+            </div>
+            <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Create a password (min 6 characters)"
+                className="w-full bg-transparent border border-blue-500 rounded-md px-4 py-3 text-white placeholder-gray-500 text-sm outline-none focus:border-blue-500 transition-colors mb-4"
+                onKeyDown={(e) => e.key === "Enter" && handleContinue()}
+            />
+
             {/* Continue */}
             <button
                 onClick={handleContinue}
-                className="w-full bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-semibold py-3 rounded-full text-sm transition-colors mb-5"
+                disabled={loading}
+                className="w-full bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-semibold py-3 rounded-full text-sm transition-colors mb-5 disabled:opacity-50"
             >
-                Continue
+                {loading ? "Creating account..." : "Continue"}
             </button>
 
             {/* Divider */}
@@ -69,7 +128,6 @@ export default function SignUp() {
 
             {/* OAuth */}
             <div className="flex flex-col gap-3 mb-7">
-                {/* Google */}
                 <button className="w-full flex items-center justify-center gap-3 bg-gray-800 hover:bg-gray-700 active:bg-gray-600 text-white font-semibold py-3 rounded-full text-sm transition-colors">
                 <svg width="18" height="18" viewBox="0 0 24 24">
                     <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
@@ -80,7 +138,6 @@ export default function SignUp() {
                 Sign up with Google
                 </button>
 
-                {/* Apple */}
                 <button className="w-full flex items-center justify-center gap-3 bg-gray-800 hover:bg-gray-700 active:bg-gray-600 text-white font-semibold py-3 rounded-full text-sm transition-colors">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="white">
                     <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/>
