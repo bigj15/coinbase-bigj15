@@ -18,7 +18,7 @@ export default function SignIn() {
     const [loading, setLoading] = useState(false);
 
     useEffect(() => {
-        if (isLoggedIn) navigate("/");
+        if (isLoggedIn) navigate("/profile");
     }, [isLoggedIn, navigate]);
 
     useEffect(() => {
@@ -37,7 +37,7 @@ export default function SignIn() {
         try {
             const data = await loginUser(email, password);
             login(data);
-            navigate("/");
+            navigate("/profile");
         } catch (err) {
             setError(err.message);
         } finally {

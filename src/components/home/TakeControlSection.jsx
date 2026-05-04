@@ -1,8 +1,10 @@
 import { useNavigate } from "react-router-dom";
+import useApp from "../../context/useApp";
 import coinClusterImg from "../../assets/coin_cluster.avif";
 
 export default function TakeControlSection() {
     const navigate = useNavigate();
+    const { isLoggedIn } = useApp();
     
     return (
         <section className="bg-white py-24">
@@ -20,18 +22,20 @@ export default function TakeControlSection() {
                     Start your portfolio today and discover crypto
                 </p>
 
-                <div className="mt-6 flex w-full flex-col gap-3 sm:flex-row sm:items-center">
-                    <input
-                    defaultValue="satoshi@nakamoto.com"
-                    className="h-11 w-full rounded-lg border border-gray-300 px-4 text-sm outline-none focus:border-[#0052FF]"
-                    />
-                    <button
-                    onClick={() => navigate("/signup")}
-                    className="h-11 shrink-0 rounded-full bg-[#0052FF] px-6 text-sm font-semibold text-white hover:bg-[#0146d6]"
-                    >
-                    Sign up
-                    </button>
-                </div>
+                {!isLoggedIn && (
+                    <div className="mt-6 flex w-full flex-col gap-3 sm:flex-row sm:items-center">
+                        <input
+                        defaultValue="satoshi@nakamoto.com"
+                        className="h-11 w-full rounded-lg border border-gray-300 px-4 text-sm outline-none focus:border-[#0052FF]"
+                        />
+                        <button
+                        onClick={() => navigate("/signup")}
+                        className="h-11 shrink-0 rounded-full bg-[#0052FF] px-6 text-sm font-semibold text-white hover:bg-[#0146d6]"
+                        >
+                        Sign up
+                        </button>
+                    </div>
+                )}
                 </div>
 
                 {/* right image */}

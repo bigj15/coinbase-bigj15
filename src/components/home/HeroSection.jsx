@@ -1,9 +1,11 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import useApp from "../../context/useApp";
 import Hero from "../../assets/Hero.png";
 
 export default function HeroSection() {
     const navigate = useNavigate();
+    const { isLoggedIn } = useApp();
     const [email, setEmail] = useState("");
     const goSignup = () => navigate("/account-type", { state: { email } });
 
@@ -35,20 +37,22 @@ export default function HeroSection() {
                     </h1>
                     <p className="mt-5 text-sm text-gray-600">Trade crypto and more on a platform you can trust.</p>
 
-                    <div className="mt-6 flex w-full flex-col gap-3 sm:flex-row justify-center lg:justify-start">
-                        <input
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            placeholder="satoshi@nakamoto.com"
-                            className="h-11 flex-1 max-w-sm rounded-md border border-gray-400 bg-white px-4 text-sm outline-none focus:border-[#0052FF]"
-                        />
-                        <button
-                            onClick={goSignup}
-                            className="h-11 rounded-full bg-[#0052FF] px-6 text-sm font-semibold text-white hover:brightness-95 whitespace-nowrap"
-                        >
-                            Sign up
-                        </button>
-                    </div>
+                    {!isLoggedIn && (
+                        <div className="mt-6 flex w-full flex-col gap-3 sm:flex-row justify-center lg:justify-start">
+                            <input
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                                placeholder="satoshi@nakamoto.com"
+                                className="h-11 flex-1 max-w-sm rounded-md border border-gray-400 bg-white px-4 text-sm outline-none focus:border-[#0052FF]"
+                            />
+                            <button
+                                onClick={goSignup}
+                                className="h-11 rounded-full bg-[#0052FF] px-6 text-sm font-semibold text-white hover:brightness-95 whitespace-nowrap"
+                            >
+                                Sign up
+                            </button>
+                        </div>
+                    )}
                 </div>
             </div>
         </section>

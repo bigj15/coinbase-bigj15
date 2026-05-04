@@ -15,7 +15,7 @@ export default function SignUp() {
     const [loading, setLoading] = useState(false);
 
     useEffect(() => {
-        if (isLoggedIn) navigate("/");
+        if (isLoggedIn) navigate("/profile");
     }, [isLoggedIn, navigate]);
 
     useEffect(() => {
@@ -37,7 +37,7 @@ export default function SignUp() {
         try {
             const data = await registerUser(name, email, password);
             login(data);
-            navigate("/");
+            navigate("/profile");
         } catch (err) {
             setError(err.message);
         } finally {
