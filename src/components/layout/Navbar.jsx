@@ -742,7 +742,6 @@ function DesktopNavItem({ label, menuKey, activeMenu, setActiveMenu, closePanels
 
 function NavbarAuthButtons() {
     const { isLoggedIn, user, logout } = useApp();
-    const navigate = (window.location.href.includes) ? null : null;
 
     if (isLoggedIn) {
         return (
@@ -784,7 +783,7 @@ function NavbarAuthButtons() {
     );
 }
 
-function MobileNavbarAuthButtons() {
+function MobileNavbarAuthButtons({ onNavigate }) {
     const { isLoggedIn, logout } = useApp();
 
     if (isLoggedIn) {
@@ -792,12 +791,13 @@ function MobileNavbarAuthButtons() {
             <>
                 <Link
                 to="/profile"
+                onClick={onNavigate}
                 className="w-full text-center rounded-full bg-[#0052FF] px-6 py-3 text-sm font-semibold text-white hover:bg-[#0046db] mb-3"
                 >
                 My Profile
                 </Link>
                 <button
-                onClick={() => { logout(); window.location.href = "/"; }}
+                onClick={() => { logout(); onNavigate?.(); window.location.href = "/"; }}
                 className="w-full text-center rounded-full bg-gray-100 px-6 py-3 text-sm font-semibold text-gray-900 hover:bg-gray-200 mb-4"
                 >
                 Sign out
@@ -810,12 +810,14 @@ function MobileNavbarAuthButtons() {
         <>
             <Link
             to="/signup"
+            onClick={onNavigate}
             className="w-full text-center rounded-full bg-[#0052FF] px-6 py-3 text-sm font-semibold text-white hover:bg-[#0046db] mb-3"
             >
             Get started
             </Link>
             <Link
             to="/signin"
+            onClick={onNavigate}
             className="w-full text-center rounded-full bg-gray-100 px-6 py-3 text-sm font-semibold text-gray-900 hover:bg-gray-200 mb-4"
             >
             Sign in
@@ -1015,20 +1017,7 @@ export default function Navbar() {
         {/* Mobile menu overlay */}
         {isMobileMenuOpen && (
             <div className="lg:hidden absolute top-16 left-0 w-full bg-white border-b border-gray-200 shadow-md flex flex-col p-4 max-h-[calc(100vh-4rem)] overflow-y-auto">
-                <Link
-                    to="/signup"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    className="w-full text-center rounded-full bg-[#0052FF] px-6 py-3 text-sm font-semibold text-white hover:bg-[#0046db] mb-3"
-                >
-                    Get started
-                </Link>
-                <Link
-                    to="/signin"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    className="w-full text-center rounded-full bg-gray-100 px-6 py-3 text-sm font-semibold text-gray-900 hover:bg-gray-200 mb-4"
-                >
-                    Sign in
-                </Link>
+                <MobileNavbarAuthButtons onNavigate={() => setIsMobileMenuOpen(false)} />
 
                 <div className="border-t border-gray-200 pt-4 flex flex-col gap-4">
                     <Link to="/explore" onClick={() => setIsMobileMenuOpen(false)} className="font-semibold text-lg text-gray-900">Explore</Link>

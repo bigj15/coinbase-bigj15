@@ -1,8 +1,12 @@
 import { useNavigate } from "react-router-dom";
+import useApp from "../../context/useApp";
 import exploreImage from "../../assets/explore_image.png";
 
 export default function CTABannerSection() {
     const navigate = useNavigate();
+    const { isLoggedIn } = useApp();
+
+    if (isLoggedIn) return null;
 
     return (
         <div className="mt-7 overflow-hidden rounded-none bg-[#0052FF] p-5 flex items-center justify-between gap-0 mb-0">

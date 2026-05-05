@@ -78,13 +78,13 @@ export default function CryptoTableSection({ search }) {
 
     return (
         <div className="mt-10">
-            <div className="flex items-center justify-between mb-3">
-                <div>
+            <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                <div className="min-w-0">
                     <h2 className="text-xl font-bold text-gray-900">
                         Crypto market prices{" "}
                         <span className="text-sm font-normal text-gray-400">{coins.length} assets</span>
                     </h2>
-                    <p className="mt-1 text-xs text-gray-500">
+                    <p className="mt-1 max-w-3xl text-xs text-gray-500">
                         The overall crypto market is growing this week. As of today, the total crypto market capitalization is 24.04 trillion,
                         representing a 0.27% increase from last week.{" "}
                         <button className="text-[#0052FF] hover:underline font-medium">Read more</button>
@@ -93,7 +93,7 @@ export default function CryptoTableSection({ search }) {
                 {isLoggedIn && (
                     <button
                         onClick={() => setShowAddModal(true)}
-                        className="flex items-center flex-shrink-0 gap-2 rounded-full bg-[#0052FF] px-4 py-2 text-sm font-semibold text-white hover:bg-[#0046d6] transition-colors whitespace-nowrap"
+                        className="flex w-fit flex-shrink-0 items-center gap-2 self-start rounded-full bg-[#0052FF] px-4 py-2 text-sm font-semibold text-white hover:bg-[#0046d6] transition-colors whitespace-nowrap sm:self-center"
                     >
                         <FiPlus size={16} />
                         Add Crypto
@@ -174,7 +174,7 @@ export default function CryptoTableSection({ search }) {
                 </div>
             )}
 
-            <p className="mt-4 text-center text-xs text-gray-400">{filtered.length} assets displayed</p>
+            <p className="mt-4 mb-3 text-center text-xs text-gray-400">{filtered.length} assets displayed</p>
 
             {/* Add Crypto Modal */}
             {showAddModal && (

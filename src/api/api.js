@@ -23,12 +23,10 @@ export async function apiRequest(endpoint, options = {}) {
 }
 
 export async function registerUser(name, email, password) {
-  const data = await apiRequest("/register", {
+  return apiRequest("/register", {
     method: "POST",
     body: JSON.stringify({ name, email, password }),
   });
-  localStorage.setItem("token", data.token);
-  return data;
 }
 
 export async function loginUser(email, password) {
