@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { FiArrowDownLeft, FiArrowUpRight, FiPlus } from "react-icons/fi";
-import { getAllCrypto, addCrypto } from "../../api/api";
+import { FiArrowDownLeft, FiArrowUpRight } from "react-icons/fi";
+import { getAllCrypto } from "../../api/api";
 import useApp from "../../context/useApp";
 
 export default function CryptoTableSection({ search }) {
@@ -10,11 +10,6 @@ export default function CryptoTableSection({ search }) {
     const [starred, setStarred] = useState(new Set());
     const [coins, setCoins] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [showAddModal, setShowAddModal] = useState(false);
-    const [addForm, setAddForm] = useState({ name: "", symbol: "", price: "", image: "", change24h: "" });
-    const [addError, setAddError] = useState("");
-    const [addSuccess, setAddSuccess] = useState("");
-    const [addLoading, setAddLoading] = useState(false);
 
     const fetchCoins = async () => {
         try {
@@ -46,39 +41,9 @@ export default function CryptoTableSection({ search }) {
             c.symbol.toLowerCase().includes(search.toLowerCase())
     );
 
-    const handleAddCrypto = async () => {
-        const { name, symbol, price, image, change24h } = addForm;
-        if (!name || !symbol || !price || !image || change24h === "") {
-            setAddError("Please fill in all fields");
-            return;
-        }
-        setAddError("");
-        setAddLoading(true);
-        try {
-            await addCrypto({
-                name,
-                symbol,
-                price: parseFloat(price),
-                image,
-                change24h: parseFloat(change24h),
-            });
-            setAddSuccess("Cryptocurrency added successfully!");
-            setAddForm({ name: "", symbol: "", price: "", image: "", change24h: "" });
-            await fetchCoins();
-            setTimeout(() => {
-                setShowAddModal(false);
-                setAddSuccess("");
-            }, 1500);
-        } catch (err) {
-            setAddError(err.message);
-        } finally {
-            setAddLoading(false);
-        }
-    };
-
     return (
         <div className="mt-10">
-            <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div className="mb-3">
                 <div className="min-w-0">
                     <h2 className="text-xl font-bold text-gray-900">
                         Crypto market prices{" "}
@@ -90,15 +55,6 @@ export default function CryptoTableSection({ search }) {
                         <button className="text-[#0052FF] hover:underline font-medium">Read more</button>
                     </p>
                 </div>
-                {isLoggedIn && (
-                    <button
-                        onClick={() => setShowAddModal(true)}
-                        className="flex w-fit flex-shrink-0 items-center gap-2 self-start rounded-full bg-[#0052FF] px-4 py-2 text-sm font-semibold text-white hover:bg-[#0046d6] transition-colors whitespace-nowrap sm:self-center"
-                    >
-                        <FiPlus size={16} />
-                        Add Crypto
-                    </button>
-                )}
             </div>
 
             {/* Filters */}
@@ -175,56 +131,6 @@ export default function CryptoTableSection({ search }) {
             )}
 
             <p className="mt-4 mb-3 text-center text-xs text-gray-400">{filtered.length} assets displayed</p>
-
-            {/* Add Crypto Modal */}
-            {showAddModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-                    <div className="bg-white rounded-2xl p-8 mx-4 max-w-md w-full shadow-2xl">
-                        <div className="flex items-center justify-between mb-6">
-                            <h2 className="text-xl font-bold text-gray-900">Add New Cryptocurrency</h2>
-                            <button onClick={() => { setShowAddModal(false); setAddError(""); setAddSuccess(""); }} className="text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
-                        </div>
-
-                        {addError && (
-                            <div className="mb-4 bg-red-50 border border-red-200 rounded-lg px-4 py-3 text-red-600 text-sm">{addError}</div>
-                        )}
-                        {addSuccess && (
-                            <div className="mb-4 bg-green-50 border border-green-200 rounded-lg px-4 py-3 text-green-600 text-sm">{addSuccess}</div>
-                        )}
-
-                        <div className="space-y-4">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
-                                <input type="text" value={addForm.name} onChange={(e) => setAddForm({ ...addForm, name: e.target.value })} placeholder="e.g. Bitcoin" className="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm outline-none focus:border-[#0052FF] transition-colors" />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Symbol</label>
-                                <input type="text" value={addForm.symbol} onChange={(e) => setAddForm({ ...addForm, symbol: e.target.value })} placeholder="e.g. BTC" className="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm outline-none focus:border-[#0052FF] transition-colors" />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Price (USD)</label>
-                                <input type="number" step="0.01" value={addForm.price} onChange={(e) => setAddForm({ ...addForm, price: e.target.value })} placeholder="e.g. 68250.12" className="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm outline-none focus:border-[#0052FF] transition-colors" />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Image URL</label>
-                                <input type="url" value={addForm.image} onChange={(e) => setAddForm({ ...addForm, image: e.target.value })} placeholder="https://example.com/coin.png" className="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm outline-none focus:border-[#0052FF] transition-colors" />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">24h Change (%)</label>
-                                <input type="number" step="0.01" value={addForm.change24h} onChange={(e) => setAddForm({ ...addForm, change24h: e.target.value })} placeholder="e.g. 2.5 or -1.3" className="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm outline-none focus:border-[#0052FF] transition-colors" />
-                            </div>
-                        </div>
-
-                        <button
-                            onClick={handleAddCrypto}
-                            disabled={addLoading}
-                            className="mt-6 w-full bg-[#0052FF] hover:bg-[#0046d6] text-white font-semibold py-3 rounded-full text-sm transition-colors disabled:opacity-50"
-                        >
-                            {addLoading ? "Adding..." : "Add Cryptocurrency"}
-                        </button>
-                    </div>
-                </div>
-            )}
         </div>
     );
 }

@@ -54,13 +54,6 @@ export async function getNewListings() {
   return apiRequest("/crypto/new");
 }
 
-export async function addCrypto(cryptoData) {
-  return apiRequest("/crypto", {
-    method: "POST",
-    body: JSON.stringify(cryptoData),
-  });
-}
-
 export function logout() {
   localStorage.removeItem("token");
 }

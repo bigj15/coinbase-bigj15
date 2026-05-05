@@ -5,7 +5,10 @@ import {
     FiGlobe,
     FiCheck,
     FiChevronDown,
-    FiChevronUp,
+    FiChevronLeft,
+    FiChevronRight,
+    FiMenu,
+    FiX,
     } from "react-icons/fi";
     import {
     HiOutlineCube,
@@ -783,54 +786,159 @@ function NavbarAuthButtons() {
     );
 }
 
-function MobileNavbarAuthButtons({ onNavigate }) {
-    const { isLoggedIn, logout } = useApp();
+const mobileMenuItems = [
+    { label: "Cryptocurrencies", path: "/explore" },
+    { label: "Learn", path: "/learn" },
+    { label: "Individuals", menuKey: "individuals" },
+    { label: "Businesses", menuKey: "businesses" },
+    { label: "Institutions", menuKey: "institutions" },
+    { label: "Developers", menuKey: "developers" },
+    { label: "Company", menuKey: "company" },
+];
 
-    if (isLoggedIn) {
+function MobileMenuPanel({ activeMobileMenu, setActiveMobileMenu, onClose, onNavigate, isLoggedIn, user, logout }) {
+    if (activeMobileMenu) {
+        const menu = menuData[activeMobileMenu];
+        const heading = mobileMenuItems.find((item) => item.menuKey === activeMobileMenu)?.label;
+
         return (
             <>
-                <Link
-                to="/profile"
-                onClick={onNavigate}
-                className="w-full text-center rounded-full bg-[#0052FF] px-6 py-3 text-sm font-semibold text-white hover:bg-[#0046db] mb-3"
-                >
-                My Profile
-                </Link>
+            <div className="flex h-[104px] shrink-0 items-center justify-between border-b border-gray-100 px-8">
                 <button
-                onClick={() => { logout(); onNavigate?.(); window.location.href = "/"; }}
-                className="w-full text-center rounded-full bg-gray-100 px-6 py-3 text-sm font-semibold text-gray-900 hover:bg-gray-200 mb-4"
+                onClick={() => setActiveMobileMenu(null)}
+                aria-label="Back to menu"
+                className="grid h-10 w-10 place-items-center rounded-full text-gray-950"
                 >
-                Sign out
+                <FiChevronLeft size={28} />
                 </button>
+                <button
+                onClick={onClose}
+                aria-label="Close menu"
+                className="grid h-10 w-10 place-items-center rounded-full text-gray-950"
+                >
+                <FiX size={26} />
+                </button>
+            </div>
+
+            <div className="min-h-0 flex-1 overflow-y-auto px-8 py-8">
+                <h2 className="mb-5 text-[24px] font-bold leading-tight text-gray-950">{heading}</h2>
+
+                <div className="space-y-1 pb-8">
+                {menu.columns.flat().map((item, index) => {
+                    const Icon = item.icon;
+                    return (
+                    <Link
+                        key={`${item.title}-${index}`}
+                        to={item.path || "/"}
+                        onClick={onNavigate}
+                        className="flex items-center gap-4 rounded-2xl py-3 text-left"
+                    >
+                        <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-[#F0F2F5] text-gray-900">
+                        {Icon && <Icon size={20} />}
+                        </span>
+                        <span className="min-w-0">
+                        <span className="block text-[18px] font-semibold leading-tight text-gray-950">{item.title}</span>
+                        {item.desc && <span className="mt-1 block text-sm leading-snug text-gray-500">{item.desc}</span>}
+                        </span>
+                    </Link>
+                    );
+                })}
+                </div>
+            </div>
             </>
         );
     }
 
     return (
         <>
-            <Link
-            to="/signup"
-            onClick={onNavigate}
-            className="w-full text-center rounded-full bg-[#0052FF] px-6 py-3 text-sm font-semibold text-white hover:bg-[#0046db] mb-3"
-            >
-            Get started
-            </Link>
-            <Link
-            to="/signin"
-            onClick={onNavigate}
-            className="w-full text-center rounded-full bg-gray-100 px-6 py-3 text-sm font-semibold text-gray-900 hover:bg-gray-200 mb-4"
-            >
-            Sign in
-            </Link>
+            <div className="flex h-[104px] shrink-0 items-center justify-between border-b border-gray-100 px-8">
+                <Link to="/" onClick={onNavigate} className="flex items-center">
+                    <img src={logo} alt="Coinbase" className="h-9 w-auto" />
+                </Link>
+                <button
+                onClick={onClose}
+                aria-label="Close menu"
+                className="grid h-10 w-10 place-items-center rounded-full text-gray-950"
+                >
+                <FiX size={26} />
+                </button>
+            </div>
+
+            <nav className="flex min-h-0 flex-1 flex-col overflow-y-auto px-8 py-8">
+                <div className="space-y-7">
+                {mobileMenuItems.map((item) =>
+                    item.path ? (
+                    <Link
+                        key={item.label}
+                        to={item.path}
+                        onClick={onNavigate}
+                        className="block text-[22px] font-bold leading-tight text-gray-950"
+                    >
+                        {item.label}
+                    </Link>
+                    ) : (
+                    <button
+                        key={item.label}
+                        onClick={() => setActiveMobileMenu(item.menuKey)}
+                        className={`flex w-full items-center justify-between gap-4 text-left text-[22px] font-bold leading-tight text-gray-950 ${
+                            item.label === "Individuals" ? "border-t border-gray-100 pt-7" : ""
+                        }`}
+                    >
+                        <span>{item.label}</span>
+                        <FiChevronRight className="shrink-0 text-[23px] text-gray-400 stroke-[2.2]" />
+                    </button>
+                    )
+                )}
+                </div>
+            </nav>
+
+            <div className="shrink-0 border-t border-gray-100 px-8 py-6">
+                {isLoggedIn ? (
+                <>
+                    <Link
+                    to="/profile"
+                    onClick={onNavigate}
+                    className="mb-4 block w-full rounded-full bg-[#F0F2F5] px-8 py-4 text-center text-[18px] font-bold text-gray-950"
+                    >
+                    {user?.name ? "Profile" : "My profile"}
+                    </Link>
+                    <button
+                    onClick={() => { logout(); onNavigate?.(); window.location.href = "/"; }}
+                    className="block w-full rounded-full bg-[#0052FF] px-8 py-4 text-center text-[18px] font-bold text-white"
+                    >
+                    Sign out
+                    </button>
+                </>
+                ) : (
+                <>
+                <Link
+                    to="/signin"
+                    onClick={onNavigate}
+                    className="mb-4 block w-full rounded-full bg-[#F0F2F5] px-8 py-4 text-center text-[18px] font-bold text-gray-950"
+                >
+                    Sign in
+                </Link>
+                <Link
+                    to="/signup"
+                    onClick={onNavigate}
+                    className="block w-full rounded-full bg-[#0052FF] px-8 py-4 text-center text-[18px] font-bold text-white"
+                >
+                    Sign up
+                </Link>
+                </>
+                )}
+            </div>
         </>
     );
 }
 
 export default function Navbar() {
+    const { isLoggedIn, user, logout } = useApp();
     const [activeMenu, setActiveMenu] = useState(null);
     const [showSearchPanel, setShowSearchPanel] = useState(false);
     const [showLanguagePanel, setShowLanguagePanel] = useState(false);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+    const [activeMobileMenu, setActiveMobileMenu] = useState(null);
 
     const [searchTab, setSearchTab] = useState("Top");
     const [searchQuery, setSearchQuery] = useState("");
@@ -848,6 +956,11 @@ export default function Navbar() {
         setShowLanguagePanel(false);
     }
 
+    function closeMobileMenu() {
+        setIsMobileMenuOpen(false);
+        setActiveMobileMenu(null);
+    }
+
     useEffect(() => {
     function handleClickOutside(e) {
         if (wrapperRef.current && !wrapperRef.current.contains(e.target)) {
@@ -862,6 +975,8 @@ export default function Navbar() {
             setActiveMenu(null);
             setShowSearchPanel(false);
             setShowLanguagePanel(false);
+            setIsMobileMenuOpen(false);
+            setActiveMobileMenu(null);
         }
     }
 
@@ -873,6 +988,13 @@ export default function Navbar() {
         document.removeEventListener("keydown", handleEsc);
         };
     }, []);
+
+    useEffect(() => {
+        document.body.style.overflow = isMobileMenuOpen ? "hidden" : "";
+        return () => {
+            document.body.style.overflow = "";
+        };
+    }, [isMobileMenuOpen]);
 
     return (
         <header
@@ -999,15 +1121,15 @@ export default function Navbar() {
             
             {/* Mobile Menu Button  (only visible below lg) */}
             <button
-                className="lg:hidden text-gray-900"
-                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                aria-label="Toggle menu"
+                className="grid h-10 w-10 place-items-center rounded-full text-gray-900 lg:hidden"
+                onClick={() => {
+                    setActiveMenu(null);
+                    closePanels();
+                    setIsMobileMenuOpen(true);
+                }}
+                aria-label="Open menu"
             >
-                <div className="space-y-1.5 p-2">
-                    <span className={`block w-6 h-0.5 bg-current transform transition duration-300 ${isMobileMenuOpen ? 'rotate-45 translate-y-2' : ''}`}></span>
-                    <span className={`block w-6 h-0.5 bg-current transition duration-300 ${isMobileMenuOpen ? 'opacity-0' : ''}`}></span>
-                    <span className={`block w-6 h-0.5 bg-current transform transition duration-300 ${isMobileMenuOpen ? '-rotate-45 -translate-y-2' : ''}`}></span>
-                </div>
+                <FiMenu size={26} />
             </button>
             </div>
         </div>
@@ -1016,16 +1138,24 @@ export default function Navbar() {
 
         {/* Mobile menu overlay */}
         {isMobileMenuOpen && (
-            <div className="lg:hidden absolute top-16 left-0 w-full bg-white border-b border-gray-200 shadow-md flex flex-col p-4 max-h-[calc(100vh-4rem)] overflow-y-auto">
-                <MobileNavbarAuthButtons onNavigate={() => setIsMobileMenuOpen(false)} />
-
-                <div className="border-t border-gray-200 pt-4 flex flex-col gap-4">
-                    <Link to="/explore" onClick={() => setIsMobileMenuOpen(false)} className="font-semibold text-lg text-gray-900">Explore</Link>
-                    <p className="font-semibold text-lg text-gray-900">Individuals</p>
-                    <p className="font-semibold text-lg text-gray-900">Businesses</p>
-                    <p className="font-semibold text-lg text-gray-900">Developers</p>
-                    <p className="font-semibold text-lg text-gray-900">Company</p>
-                </div>
+            <div className="fixed inset-0 z-[80] bg-black/45 lg:hidden" role="dialog" aria-modal="true">
+                <button
+                type="button"
+                aria-label="Close menu backdrop"
+                onClick={closeMobileMenu}
+                className="absolute inset-0 h-full w-full cursor-default"
+                />
+                <aside className="relative ml-auto flex h-dvh w-[77vw] max-w-[456px] min-w-[320px] flex-col bg-white shadow-2xl">
+                    <MobileMenuPanel
+                    activeMobileMenu={activeMobileMenu}
+                    setActiveMobileMenu={setActiveMobileMenu}
+                    onClose={closeMobileMenu}
+                    onNavigate={closeMobileMenu}
+                    isLoggedIn={isLoggedIn}
+                    user={user}
+                    logout={logout}
+                    />
+                </aside>
             </div>
         )}
         </header>
